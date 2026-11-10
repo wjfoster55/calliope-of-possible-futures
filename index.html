@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calliope of Possible Futures — a slow generative steam calliope in 15/16</title>
+<style>
+  :root{
+    --bg:#171019; --panel:#241627; --panel2:#2d1b31; --ink:#f3e7d3; --muted:#c9aecd;
+    --brass:#e8b34b; --brass2:#ffdf8e; --red:#e4572e; --teal:#3ec6b8; --violet:#9b7ede;
+    --line:#4a2c50;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 700px at 50% -10%, #3a1f3f, var(--bg));color:var(--ink);
+       font-family:Georgia,'Times New Roman',serif;}
+  header{text-align:center;padding:26px 16px 6px}
+  h1{margin:0;font-size:clamp(26px,5vw,44px);letter-spacing:.5px;color:var(--brass2);
+     text-shadow:0 2px 0 #6b3a12, 0 0 24px rgba(232,179,75,.35)}
+  .sub{color:var(--muted);max-width:760px;margin:10px auto 0;font-size:clamp(14px,2.4vw,17px);line-height:1.45}
+  .transport{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;align-items:center;
+             padding:16px 12px;max-width:980px;margin:0 auto}
+  button{background:linear-gradient(180deg,#ffd97a,#d99a26);color:#3a2205;border:2px solid #8a5f14;
+         border-radius:999px;font-family:inherit;font-weight:bold;cursor:pointer;
+         padding:12px 26px;font-size:18px;box-shadow:0 3px 0 #8a5f14}
+  button:active{transform:translateY(2px);box-shadow:none}
+  button.small{padding:8px 16px;font-size:14px;background:linear-gradient(180deg,#4b2c55,#35203d);color:var(--ink);border-color:var(--line);box-shadow:none}
+  .ctl{display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--muted);min-width:150px}
+  .ctl b{color:var(--ink);font-size:14px}
+  input[type=range]{accent-color:var(--brass);width:100%}
+  .wrap{max-width:1180px;margin:0 auto;padding:6px 14px 40px;display:grid;grid-template-columns:1fr 340px;gap:16px}
+  @media (max-width:900px){.wrap{grid-template-columns:1fr}}
+  .card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+        border-radius:16px;padding:14px 16px;margin-bottom:16px;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+  .wheel-head{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  .dial{flex:0 0 auto}
+  .wheel-info{flex:1;min-width:230px}
+  .role{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--teal)}
+  .wname{font-size:24px;color:var(--brass2);margin:2px 0}
+  .wdesc{color:var(--muted);font-size:14px;line-height:1.4}
+  .badge{display:inline-block;background:#4b2c55;border:1px solid var(--violet);color:#e6dcff;border-radius:999px;
+         padding:1px 10px;font-size:12px;margin-left:8px;vertical-align:middle}
+  .strip{display:flex;gap:2px;margin-top:10px;flex-wrap:nowrap;overflow:hidden}
+  .cell{flex:1;height:16px;border-radius:3px;background:#3a2340;position:relative}
+  .cell.on{background:var(--brass)}
+  .cell.now{outline:2px solid #fff;outline-offset:0}
+  .cell.grp{border-left:2px solid rgba(255,255,255,.35)}
+  .nextnotes{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.5}
+  .nextnotes b{color:var(--ink)}
+  .seamline{font-size:13px;margin-top:6px;color:var(--ink)}
+  .futures{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .chip{background:#1d1122;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12.5px;color:var(--muted)}
+  .chip.hot{border-color:var(--red);color:#ffb59d}
+  .chip.cool{border-color:var(--teal);color:#b8f2ec}
+  .gauge{height:22px;background:#1d1122;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+  .gauge > div{height:100%;background:linear-gradient(90deg,var(--teal),var(--brass),var(--red));width:35%;transition:width .6s}
+  .big{font-size:30px;color:var(--brass2)}
+  .log{list-style:none;margin:0;padding:0;font-size:13.5px;line-height:1.5}
+  .log li{padding:7px 0;border-bottom:1px dashed var(--line)}
+  .log li:last-child{border-bottom:none}
+  .log .t{color:var(--brass);font-weight:bold}
+  .nowplay{font-size:15px;line-height:1.55}
+  .nowplay .chord{font-size:22px;color:var(--brass2)}
+  footer{max-width:900px;margin:0 auto;padding:0 18px 46px;color:var(--muted);line-height:1.6;font-size:15px}
+  footer h2{color:var(--brass2);font-size:21px;margin:22px 0 6px}
+  footer b{color:var(--ink)}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎪 The Calliope of Possible Futures</h1>
+  <p class="sub">Nine pinned wheels. Only three are loaded at a time. Because every wheel is a cylinder,
+  you can see <b>everything that is about to happen</b> — and at each seam, you can see the
+  <b>possible futures</b> and watch which one the machine chooses. Changes are slow and syrupy:
+  a pressure builds underneath until it forces one wheel to slide away and another to slide in.</p>
+</header>
+
+<div class="transport">
+  <button id="playBtn">▶ Play</button>
+  <div class="ctl"><b>Tempo — <span id="tempoVal">164</span> BPM</b>
+    <input type="range" id="tempo" min="120" max="200" value="164"></div>
+  <div class="ctl"><b>Steam — <span id="steamVal">100</span>%</b>
+    <input type="range" id="steam" min="60" max="140" value="100"></div>
+  <button class="small" id="nudgeBtn">Stoke the boiler (+pressure)</button>
+  <button class="small" id="resetBtn">Reset the machine</button>
+</div>
+
+<div class="wrap">
+  <div id="wheels"></div>
+
+  <div>
+    <div class="card">
+      <div class="role">Now sounding</div>
+      <div class="nowplay" style="margin-top:6px">
+        Bar <span class="big" id="barNum">1</span> <span style="color:var(--muted)">of the 16-bar chord ring</span><br>
+        Chord: <span class="chord" id="chordName">C major</span><br>
+        <span id="lensNote" style="color:var(--muted)">Melody and bass are the frame. The harmony wheel is the lens.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="role">Boiler pressure — the carry underneath</div>
+      <div style="display:flex;align-items:baseline;gap:10px;margin:8px 0">
+        <span class="big" id="pressureNum">35</span><span style="color:var(--muted)">/ 100</span>
+        <span id="pressureState" style="color:var(--muted);font-size:13px">building…</span>
+      </div>
+      <div class="gauge"><div id="pressureBar"></div></div>
+      <p style="color:var(--muted);font-size:13.5px;line-height:1.5;margin:10px 0 0">
+        Every bar adds pressure, and bars where the wheels' accents land together add more.
+        High pressure makes a swap at the next seam more likely — at 90+ the swap is forced and the
+        pressure blows off. After any change, the machine locks for 10 bars so nothing churns.</p>
+    </div>
+
+    <div class="card">
+      <div class="role">Next seam</div>
+      <div id="nextSeam" style="margin-top:8px;font-size:15px;line-height:1.55">—</div>
+    </div>
+
+    <div class="card">
+      <div class="role">Seam log — what the machine chose</div>
+      <ul class="log" id="seamLog" style="margin-top:6px">
+        <li><span class="t">Start</span> — Parade melody, Boiler bass, Sun harmony. The futures are already loaded above each wheel.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <h2>How to listen to it</h2>
+  <p><b>It is 15/16, but it is dressed as 4/4.</b> The accents pretend there are four even beats coming,
+  so your ear keeps expecting a normal bar — but the bar is one sixteenth <i>short</i>, so it lands early
+  and the tune is already off again. The chord ring does the same trick bigger: it pretends to resolve at
+  bars 4, 8 and 12 and swerves each time; the real landing is bar 16 rolling straight back into bar 1.</p>
+
+  <h2>The three wheels</h2>
+  <p><b>Melody (top)</b> and <b>bass (bottom)</b> are the frame — between them they never play the note that
+  decides major or minor. <b>Harmony (middle)</b> is the lens: it alone supplies that deciding note.
+  Load the <b>Sun</b> lens and the frame sounds major. Let a seam swap in the <b>Shade</b> lens and the same
+  frame, note for note, turns minor. The <b>Re-root</b> lens instead adds the note a third below home, so a
+  C major chord is re-heard as A minor 7 — melody and bass never changed at all.</p>
+
+  <h2>Seams, swaps and Möbius flips</h2>
+  <p>Each wheel repeats on its own cycle — melody every 4 bars, bass every 3, harmony every 2 — so their
+  seams arrive at different times and the full alignment takes a long while to come round again.
+  At its seam a wheel may <b>stay</b>, <b>swap</b> for one of the other two wheels in its bank (sliding in
+  over a whole cycle while the old one fades), or <b>Möbius-flip</b>: the same wheel, but its feed reverses
+  and it plays its own pattern backwards. The chances next to each wheel are the live possible futures —
+  they move as the boiler pressure moves. At least one wheel always stays, so the machine evolves instead
+  of jumping.</p>
+
+  <p style="margin-top:18px">Proof of concept, as agreed: all notes are guessed and disposable. This is a toy
+  for hearing the <i>shape</i> — it is not material for the actual song.</p>
+</footer>
+
+<script>
+"use strict";
+/* ============ basic music data ============ */
+const NOTE_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const MAJOR = [0,2,4,5,7,9,11];
+const noteName = m => NOTE_NAMES[((m % 12) + 12) % 12] + (Math.floor(m / 12) - 1);
+function stepMidi(baseMidi, steps){ // walk the major scale from a root
+  const oct = Math.floor(steps / 7), w = steps - oct * 7;
+  return baseMidi + oct * 12 + MAJOR[w];
+}
+/* 16-bar chord ring: semitone offset of each bar's root from C.
+   Bars 4, 8, 12 sit on G (the dominant) and swerve; bar 16 doubles the G so
+   the real resolution is the loop back to bar 1. */
+const ROOTS = [0,0,5,7, 9,5,0,7, 4,9,5,7, 0,5,7,7];
+const ROOTNAMES = ROOTS.map(o => NOTE_NAMES[o]);
+const GROUPS = [4,4,4,3], BOUNDS = [0,4,8,12];
+const SLOTS = 15;
+
+/* ============ the nine wheels ============ */
+/* Melody wheels: 4 bars x 15 slots. Chars are major-scale steps above the bar
+   root ('.' = rest, a=10, b=11). Step 2 (the major/minor-deciding third) is
+   deliberately never used by melody or bass — only the harmony lens plays it. */
+const MELODY = [
+  {name:"Parade", desc:"Bright march melody, lots of bounce off the root and fifth.",
+   bars:["7.8.7.4.5.4.7..","8.8.a.8.7.5.4..","4.5.7.8.a.8.7..","b.a.8.7.5.4.0.."]},
+  {name:"Ferris Wheel", desc:"Slow, round melody — one long note per beat group, everything turning.",
+   bars:["4...5...7...8..","8...7...5...4..","5...7...8...b..","a...8...7...5.."]},
+  {name:"Tightrope", desc:"Dense little runs, tiptoeing up and back down the scale.",
+   bars:["7.8.a.b.a.8.7..","5.7.8.7.5.4.5..","4.5.7.5.4.3.4..","3.4.5.4.3.1.0.."]},
+];
+/* Bass wheels: 3 bars x 15 slots. r=root, f=fifth, o=root octave, F=fifth octave (all below/around the root). */
+const BASS = [
+  {name:"Boiler Room", desc:"Steady oompah — root, fifth, root, fifth, the engine room.",
+   bars:["r.f.r.f.r.f.r.f","r.f.r.f.r.f.r.f","r.f.r.f.o.F.o.."]},
+  {name:"Riverboat", desc:"Sparse paddle-wheel bass, one stroke per beat group.",
+   bars:["r...f...o...f..","r...f...o...f..","r...o...F...o.."]},
+  {name:"Big Drum", desc:"Very sparse, heavy — long silences, then one deep stroke.",
+   bars:["r.....f.....o..","r......f....o..","r....f......o.."]},
+];
+const BASS_OFF = {r:0, f:7, o:12, F:19};
+/* Harmony wheels (the lens): 2 bars, stabs on listed slots.
+   sun = major third; shade = minor third (+ flat 7 colour); reroot = adds the
+   relative-minor root so a major chord is re-heard as a minor 7th. */
+const HARMONY = [
+  {name:"Sun", lens:"sun", desc:"The sunny lens — supplies the major third. The frame sounds major.",
+   bars:[[0,8],[0,12]]},
+  {name:"Shade", lens:"shade", desc:"The shady lens — supplies the minor third and a flat-7 colour. Same frame, now minor.",
+   bars:[[0,8],[0,8,12]]},
+  {name:"Re-root", lens:"reroot", desc:"Adds the note a third below home, so C major is re-heard as A minor 7. A and B never changed.",
+   bars:[[0],[0,8]]},
+];
+const BANKS = {melody:MELODY, bass:BASS, harmony:HARMONY};
+const ROLE_LABEL = {melody:"Melody wheel — top pipes", bass:"Bass wheel — bottom pipes", harmony:"Harmony wheel — the lens"};
+const CYCLE = {melody:4, bass:3, harmony:2};
+
+/* ============ machine state ============ */
+const state = {
+  playing:false, bar:0, step:0, tempo:164, steam:1.0,
+  pressure:35, cooldownUntil:0, nextNoteTime:0, timer:null, audio:null, master:null,
+  roles:{
+    melody:{idx:0, flipped:false, cycleStart:0, nextSeam:CYCLE.melody, prevIdx:-1, fadeStart:-1},
+    bass:{idx:0, flipped:false, cycleStart:0, nextSeam:CYCLE.bass, prevIdx:-1, fadeStart:-1},
+    harmony:{idx:0, flipped:false, cycleStart:0, nextSeam:CYCLE.harmony, prevIdx:-1, fadeStart:-1},
+  }
+};
+const $ = id => document.getElementById(id);
+
+/* pattern access, honouring a Möbius flip (pattern played backwards in its cycle) */
+function cyclePos(role, bar, step){
+  const L = CYCLE[role] * SLOTS;
+  let pos = ((bar - state.roles[role].cycleStart) % CYCLE[role]) * SLOTS + step;
+  if (state.roles[role].flipped) pos = L - 1 - pos;
+  return pos;
+}
+function melodyNoteAt(wheel, rootMidi, barInCycle, step){
+  const ch = wheel.bars[barInCycle][step];
+  if (ch === "." || ch === undefined) return null;
+  const steps = parseInt(ch, 12);
+  return stepMidi(rootMidi + 24, steps);
+}
+function bassNoteAt(wheel, rootMidi, barInCycle, step){
+  const ch = wheel.bars[barInCycle][step];
+  if (!(ch in BASS_OFF)) return null;
+  return rootMidi - 12 + BASS_OFF[ch];
+}
+function harmonyNotesAt(wheel, rootMidi, barInCycle, step){
+  if (!wheel.bars[barInCycle].includes(step)) return [];
+  const base = rootMidi + 12;
+  if (wheel.lens === "sun") return [0,4,7].map(o => base + o);
+  if (wheel.lens === "shade"){
+    const tones = [0,3,7];
+    if (barInCycle === 1 && step === 12) tones.push(10);
+    return tones.map(o => base + o);
+  }
+  return [9,12,16].map(o => base + o); // re-root
+}
+function notesFor(role, wheelIdx, bar, step, rootMidi){
+  const wheel = BANKS[role][wheelIdx];
+  const pos = cyclePos(role, bar, step);
+  const barInCycle = Math.floor(pos / SLOTS), s = pos % SLOTS;
+  if (role === "melody"){ const n = melodyNoteAt(wheel, rootMidi, barInCycle, s); return n ? [n] : []; }
+  if (role === "bass"){ const n = bassNoteAt(wheel, rootMidi, barInCycle, s); return n ? [n] : []; }
+  return harmonyNotesAt(wheel, rootMidi, barInCycle, s);
+}
+/* events for one slot, including the syrupy crossfade during a new wheel's first cycle */
+function roleEvents(role, bar, step, rootMidi){
+  const R = state.roles[role];
+  const out = notesFor(role, R.idx, bar, step, rootMidi).map(n => ({n, v:1}));
+  if (R.prevIdx >= 0 && bar >= R.fadeStart && bar < R.fadeStart + CYCLE[role]){
+    const total = CYCLE[role] * SLOTS;
+    const p = (((bar - R.fadeStart) * SLOTS) + step) / total; // 0 -> 1 across the cycle
+    const old = notesFor(role, R.prevIdx, bar, step, rootMidi);
+    return out.map(e => ({n:e.n, v:p})).concat(old.map(n => ({n, v:1 - p})));
+  }
+  return out;
+}
+
+/* ============ audio ============ */
+function ensureAudio(){
+  if (state.audio) return;
+  const AC = new (window.AudioContext || window.webkitAudioContext)();
+  const master = AC.createGain(); master.gain.value = 0.85;
+  const comp = AC.createDynamicsCompressor();
+  master.connect(comp); comp.connect(AC.destination);
+  state.audio = AC; state.master = master;
+}
+function playTone(midi, t, dur, vol, role){
+  const AC = state.audio; if (!AC) return;
+  const freq = 440 * Math.pow(2, (midi - 69) / 12) * state.steam;
+  const g = AC.createGain();
+  const bright = role === "melody" ? 4200 : role === "harmony" ? 3000 : 1400;
+  const f = AC.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = bright * state.steam;
+  const mk = (mult, type, gv) => {
+    const o = AC.createOscillator(); o.type = type; o.frequency.value = freq * mult;
+    const og = AC.createGain(); og.gain.value = gv;
+    o.connect(og); og.connect(f); o.start(t); o.stop(t + dur + 0.1);
+  };
+  mk(1, "sine", 1); mk(2, "triangle", 0.32); mk(3, "sine", 0.10);
+  f.connect(g); g.connect(state.master);
+  const peak = vol * (role === "bass" ? 0.30 : role === "harmony" ? 0.16 : 0.22);
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(peak, t + 0.01);
+  g.gain.setValueAtTime(peak, t + Math.max(0.01, dur - 0.05));
+  g.gain.linearRampToValueAtTime(0, t + dur);
+  if (role === "melody"){ // a little breath of steam on each top note
+    const len = Math.floor(AC.sampleRate * 0.03);
+    const buf = AC.createBuffer(1, len, AC.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const src = AC.createBufferSource(); src.buffer = buf;
+    const hp = AC.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 2500;
+    const ng = AC.createGain(); ng.gain.value = 0.05 * vol;
+    src.connect(hp); hp.connect(ng); ng.connect(state.master); src.start(t);
+  }
+}
+const stepDur = () => 60 / state.tempo / 4;
+
+/* ============ seams, pressure, futures ============ */
+function futuresFor(role){
+  const R = state.roles[role];
+  if (state.bar < state.cooldownUntil) return [{label:"Locked — too soon after the last change", pct:100, kind:"stay"}];
+  const pSwap = state.pressure >= 90 ? 1 : Math.min(0.6, 0.22 + state.pressure * 0.0035);
+  const pFlip = state.pressure >= 90 ? 0 : 0.15;
+  const pStay = Math.max(0, 1 - pSwap - pFlip);
+  const others = [0,1,2].filter(i => i !== R.idx);
+  const out = [{label:"Stays " + BANKS[role][R.idx].name, pct:Math.round(pStay * 100), kind:"stay"}];
+  others.forEach(i => out.push({label:"Swaps → " + BANKS[role][i].name, pct:Math.round(pSwap * 50), kind:"swap"}));
+  out.push({label:"Möbius flip — same wheel, feed reversed", pct:Math.round(pFlip * 100), kind:"flip"});
+  return out;
+}
+function logSeam(html){
+  const li = document.createElement("li");
+  li.innerHTML = html;
+  const log = $("seamLog");
+  log.prepend(li);
+  while (log.children.length > 7) log.removeChild(log.lastChild);
+}
+function alignmentBonus(bar){
+  const rootMidi = 48 + ROOTS[bar % 16];
+  let hits = 0;
+  for (let s = 0; s < SLOTS; s++){
+    let c = 0;
+    for (const role of ["melody","bass","harmony"]) if (notesFor(role, state.roles[role].idx, bar, s, rootMidi).length) c++;
+    if (c >= 2) hits++;
+  }
+  return Math.min(6, hits);
+}
+function decideSeam(role, bar){
+  const R = state.roles[role];
+  const name = BANKS[role][R.idx].name;
+  if (bar < state.cooldownUntil){
+    R.cycleStart = bar; R.nextSeam = bar + CYCLE[role];
+    if (state.pressure > 70) logSeam(`<span class="t">Bar ${bar + 1}</span> — ${ROLE_LABEL[role].split(" —")[0]} seam: ${name} <b>held</b>. The machine changed too recently — syrup, not churn.`);
+    return;
+  }
+  const futs = futuresFor(role);
+  let roll = Math.random(), acc = 0, chosen = futs[0];
+  for (const f of futs){ acc += f.pct / 100; if (roll <= acc){ chosen = f; break; } }
+  const forced = state.pressure >= 90;
+  if (chosen.kind === "swap"){
+    const others = [0,1,2].filter(i => i !== R.idx);
+    const target = BANKS[role][others[Math.floor(Math.random() * others.length)]];
+    const targetIdx = BANKS[role].indexOf(target);
+    const oldName = name;
+    R.prevIdx = R.idx; R.idx = targetIdx; R.fadeStart = bar; R.flipped = false;
+    R.cycleStart = bar; R.nextSeam = bar + CYCLE[role];
+    state.pressure = Math.max(5, state.pressure - 55);
+    state.cooldownUntil = bar + 10;
+    let extra = "";
+    if (role === "harmony"){
+      extra = target.lens === "shade" ? " The lens went shady — the same melody and bass now sound <b>minor</b>. They never changed."
+            : target.lens === "reroot" ? " The lens re-rooted — major chords are re-heard as <b>relative minor 7ths</b>. Melody and bass never changed."
+            : " The lens went sunny — the frame sounds <b>major</b> again.";
+    }
+    logSeam(`<span class="t">Bar ${bar + 1}</span> — ${forced ? "Pressure forced it: " : ""}${ROLE_LABEL[role].split(" —")[0]} wheel <b>${oldName} → ${target.name}</b>, sliding in over the next ${CYCLE[role]} bars.${extra}`);
+  } else if (chosen.kind === "flip"){
+    R.flipped = !R.flipped; R.cycleStart = bar; R.nextSeam = bar + CYCLE[role];
+    state.pressure = Math.max(5, state.pressure - 25);
+    state.cooldownUntil = bar + 10;
+    logSeam(`<span class="t">Bar ${bar + 1}</span> — <b>Möbius flip</b>: the ${name} wheel's feed reversed. Same pins, played backwards from this seam.`);
+  } else {
+    R.cycleStart = bar; R.nextSeam = bar + CYCLE[role];
+    state.pressure = Math.min(100, state.pressure + 8);
+    if (state.pressure > 55) logSeam(`<span class="t">Bar ${bar + 1}</span> — ${name} seam: it <b>stayed</b> (the roll landed on stay). Pressure keeps building: ${state.pressure}.`);
+  }
+}
+function onBarLine(bar){ // bar has just ended; new bar index = bar+1 is beginning
+  const ended = bar;
+  state.pressure = Math.min(100, state.pressure + 3 + Math.min(4, alignmentBonus(ended)));
+  for (const role of ["melody","bass","harmony"])
+    if (state.roles[role].nextSeam === ended + 1) decideSeam(role, ended + 1);
+  renderPanel();
+}
+
+/* ============ rendering ============ */
+function buildWheels(){
+  const host = $("wheels"); host.innerHTML = "";
+  for (const role of ["melody","bass","harmony"]){
+    const card = document.createElement("div"); card.className = "card"; card.id = "card-" + role;
+    card.innerHTML = `
+      <div class="wheel-head">
+        <svg class="dial" width="150" height="150" viewBox="0 0 150 150">
+          <circle cx="75" cy="75" r="70" fill="#1d1122" stroke="#4a2c50"/>
+          <g class="pins"></g>
+          <polygon points="75,2 69,14 81,14" fill="#fff"/>
+          <circle cx="75" cy="75" r="10" fill="#e8b34b" stroke="#8a5f14"/>
+        </svg>
+        <div class="wheel-info">
+          <div class="role">${ROLE_LABEL[role]}</div>
+          <div class="wname"><span class="nm"></span><span class="badge" style="display:none">Möbius-flipped</span></div>
+          <div class="wdesc"></div>
+          <div class="seamline"></div>
+          <div class="futures"></div>
+        </div>
+      </div>
+      <div class="strip"></div>
+      <div class="nextnotes"></div>`;
+    host.appendChild(card);
+  }
+}
+function pinsFor(role){
+  const R = state.roles[role];
+  const wheel = BANKS[role][R.idx];
+  const total = CYCLE[role] * SLOTS, pins = [];
+  for (let pos = 0; pos < total; pos++){
+    const b = Math.floor(pos / SLOTS), s = pos % SLOTS;
+    let on = false;
+    if (role === "melody") on = wheel.bars[b][s] !== ".";
+    else if (role === "bass") on = wheel.bars[b][s] in BASS_OFF;
+    else on = wheel.bars[b].includes(s);
+    pins.push(on);
+  }
+  return pins;
+}
+function renderWheel(role){
+  const R = state.roles[role], wheel = BANKS[role][R.idx];
+  const card = $("card-" + role);
+  card.querySelector(".nm").textContent = wheel.name;
+  card.querySelector(".wdesc").textContent = wheel.desc;
+  card.querySelector(".badge").style.display = R.flipped ? "inline-block" : "none";
+  const total = CYCLE[role] * SLOTS;
+  const pins = pinsFor(role);
+  const g = card.querySelector(".pins");
+  const pos = cyclePos(role, state.bar, state.step);
+  g.setAttribute("transform", `rotate(${(-pos / total) * 360} 75 75)`);
+  if (g.childElementCount !== total){
+    g.innerHTML = pins.map((on, i) => {
+      const a = (i / total) * Math.PI * 2, x = 75 + 61 * Math.sin(a), y = 75 - 61 * Math.cos(a);
+      return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${on ? 3.4 : 1.4}" fill="${on ? "#e8b34b" : "#5a3a63"}"/>`;
+    }).join("");
+  }
+  // unrolled strip of the current bar
+  const rootMidi = 48 + ROOTS[state.bar % 16];
+  const strip = card.querySelector(".strip"); strip.innerHTML = "";
+  for (let s = 0; s < SLOTS; s++){
+    const c = document.createElement("div");
+    c.className = "cell" + (notesFor(role, R.idx, state.bar, s, rootMidi).length ? " on" : "")
+      + (s === state.step ? " now" : "") + (BOUNDS.includes(s) ? " grp" : "");
+    strip.appendChild(c);
+  }
+  // seam + futures
+  const futs = futuresFor(role);
+  card.querySelector(".seamline").innerHTML =
+    `Seam in <b>${R.nextSeam - state.bar}</b> bar(s) — its possible futures right now:`;
+  card.querySelector(".futures").innerHTML = futs.map(f =>
+    `<span class="chip ${f.kind === "swap" ? "hot" : f.kind === "flip" ? "cool" : ""}">${f.label} · ${f.pct}%</span>`).join("");
+  // upcoming notes on this cylinder
+  const names = [];
+  for (let ahead = 0; ahead < 45 && names.length < 8; ahead++){
+    const b = state.bar + Math.floor((state.step + ahead) / SLOTS);
+    const s = (state.step + ahead) % SLOTS;
+    const ns = notesFor(role, R.idx, b, s, 48 + ROOTS[b % 16]);
+    ns.forEach(n => names.push(noteName(n)));
+  }
+  card.querySelector(".nextnotes").innerHTML =
+    `Coming up on this cylinder: <b>${names.join(" · ") || "—"}</b>`;
+}
+function renderPanel(){
+  $("barNum").textContent = (state.bar % 16) + 1;
+  const rootOff = ROOTS[state.bar % 16];
+  const lens = BANKS.harmony[state.roles.harmony.idx].lens;
+  const chord = lens === "sun" ? ROOTNAMES[state.bar % 16] + " major"
+    : lens === "shade" ? ROOTNAMES[state.bar % 16] + " minor (shade lens)"
+    : NOTE_NAMES[(rootOff + 9) % 12] + " minor 7 (re-rooted lens)";
+  $("chordName").textContent = chord;
+  $("lensNote").textContent = lens === "sun"
+    ? "Melody and bass are the frame. The harmony wheel is the lens — currently sunny."
+    : "Melody and bass did not change at all. Only the lens wheel did — and the chord turned.";
+  $("pressureNum").textContent = Math.round(state.pressure);
+  $("pressureBar").style.width = state.pressure + "%";
+  $("pressureState").textContent = state.pressure >= 90 ? "critical — a swap will be FORCED at the next seam"
+    : state.pressure >= 65 ? "high — swaps are likely at the next seam"
+    : state.bar < state.cooldownUntil ? "blown off — machine is locked, letting things settle"
+    : "building…";
+  // next seam banner
+  let best = null;
+  for (const role of ["melody","bass","harmony"]){
+    const d = state.roles[role].nextSeam - state.bar;
+    if (!best || d < best.d) best = {role, d};
+  }
+  const futs = futuresFor(best.role);
+  const top = futs.slice().sort((a, b) => b.pct - a.pct)[0];
+  $("nextSeam").innerHTML =
+    `The <b>${best.role}</b> wheel (<b>${BANKS[best.role][state.roles[best.role].idx].name}</b>) reaches its seam in
+     <b>${best.d}</b> bar(s). Most likely future right now: <b>${top.label} (${top.pct}%)</b> — but the
+     pressure gauge can still move it.`;
+}
+function renderAll(){ for (const role of ["melody","bass","harmony"]) renderWheel(role); renderPanel(); }
+
+/* ============ scheduler ============ */
+function schedule(){
+  while (state.nextNoteTime < state.audio.currentTime + 0.15){
+    const t = state.nextNoteTime;
+    const bar = state.bar, step = state.step;
+    const rootMidi = 48 + ROOTS[bar % 16];
+    const sd = stepDur();
+    for (const role of ["melody","bass","harmony"]){
+      roleEvents(role, bar, step, rootMidi).forEach(ev => {
+        const dur = role === "harmony" ? sd * 2 : sd * (role === "bass" ? 1.3 : 0.95);
+        playTone(ev.n, t, dur, ev.v, role);
+      });
+    }
+    const uiDelay = Math.max(0, (t - state.audio.currentTime) * 1000);
+    setTimeout(() => { renderAll(); }, uiDelay);
+    state.nextNoteTime += sd;
+    state.step++;
+    if (state.step >= SLOTS){ state.step = 0; onBarLine(state.bar); state.bar++; }
+  }
+}
+function setPlaying(on){
+  state.playing = on;
+  $("playBtn").textContent = on ? "⏸ Pause" : "▶ Play";
+  if (on){
+    ensureAudio();
+    if (state.audio.state === "suspended") state.audio.resume();
+    state.nextNoteTime = state.audio.currentTime + 0.06;
+    state.timer = setInterval(schedule, 30);
+  } else if (state.timer){ clearInterval(state.timer); state.timer = null; }
+}
+
+/* ============ controls ============ */
+$("playBtn").addEventListener("click", () => setPlaying(!state.playing));
+$("tempo").addEventListener("input", e => { state.tempo = +e.target.value; $("tempoVal").textContent = e.target.value; });
+$("steam").addEventListener("input", e => { state.steam = +e.target.value / 100; $("steamVal").textContent = e.target.value; });
+$("nudgeBtn").addEventListener("click", () => {
+  state.pressure = Math.min(100, state.pressure + 18);
+  logSeam(`<span class="t">Boiler</span> — you stoked the boiler. Pressure is now ${Math.round(state.pressure)}. Watch the futures shift.`);
+  renderAll();
+});
+$("resetBtn").addEventListener("click", () => {
+  state.bar = 0; state.step = 0; state.pressure = 35; state.cooldownUntil = 0;
+  state.roles = {
+    melody:{idx:0, flipped:false, cycleStart:0, nextSeam:CYCLE.melody, prevIdx:-1, fadeStart:-1},
+    bass:{idx:0, flipped:false, cycleStart:0, nextSeam:CYCLE.bass, prevIdx:-1, fadeStart:-1},
+    harmony:{idx:0, flipped:false, cycleStart:0, nextSeam:CYCLE.harmony, prevIdx:-1, fadeStart:-1},
+  };
+  $("seamLog").innerHTML = `<li><span class="t">Start</span> — Parade melody, Boiler bass, Sun harmony. The futures are already loaded above each wheel.</li>`;
+  for (const role of ["melody","bass","harmony"]){ const g = $("card-" + role).querySelector(".pins"); g.innerHTML = ""; }
+  renderAll();
+});
+buildWheels();
+renderAll();
+</script>
+</body>
+</html>
